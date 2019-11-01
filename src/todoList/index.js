@@ -6,31 +6,25 @@ import {
   getRemoveItemAction,
   getCheckboxChangeAction
 } from '../store/actionCreators'
+import { connect } from 'react-redux'
 
 class Todo extends Component {
   constructor(props) {
     super(props)
     this.textInput = React.createRef();
-    // this.state = {
-    //     list: [
-    //         {
-    //             title: 'coding',
-    //             done: false
-    //         }
-    //     ]
-    // }
     this.state = store.getState()
     store.subscribe(this.handleStoreChange)
   }
-  handleButtonClick = () => {
-    this.addItem()
+
+  handleButtonClick = (fn) => {
+    this.addItem(fn)
   }
-  handleKeyEnter = (e) => {
+  handleKeyEnter = (fn, e) => {
     if (e.key === 'Enter') {
-      this.addItem()
+      this.addItem(fn)
     }
   }
-  addItem () {
+  addItem (dispatchFn) {
     let title = this.textInput.current.value
     if (title) {
       title = title.trim()
@@ -43,54 +37,9 @@ class Todo extends Component {
       title,
       done: false,
     }
-
-    // no redux
-    // let list = [...this.state.list, item]
-    // this.setState({
-    //     list
-    // }, () => {
-    //     this.textInput.current.value = ''
-    // })
-
-    // redux
-    // let action = {
-    //   type: 'ADD_ITEM',
-    //   value: item,
-    // }
-    let action = getAddItemAction(item)
-    store.dispatch(action)
+    // this.props.addItem(item)
+    dispatchFn && dispatchFn(item)
     this.textInput.current.value = ''
-  }
-  checkboxChange = (index, event) => {
-    let value = event.currentTarget.checked
-
-    // let items = this.state.list.slice()
-    // items[i].done = value
-    // this.setState({
-    //     list: items
-    // })
-
-    // let action = {
-    //   type: 'CHECKBOX_CHANGE',
-    //   value,
-    //   index,
-    // }
-
-    let action = getCheckboxChangeAction(index, value)
-    store.dispatch(action)
-  }
-  handleRemoveItem = (index, event) => {
-    // let filtered = this.state.list.filter((v, i) => i !== index)
-    // this.setState({
-    //     list: filtered
-    // })
-    // let action = {
-    //   type: 'REMOVE_ITEM',
-    //   index,
-    // }
-
-    let action = getRemoveItemAction(index)
-    store.dispatch(action)
   }
   handleStoreChange = () => {
     let newState = store.getState()
@@ -103,18 +52,47 @@ class Todo extends Component {
         <input
           type="text"
           ref={this.textInput}
-          onKeyDown={this.handleKeyEnter}
+          onKeyDown={(ev) => {this.handleKeyEnter(this.props.addItem, ev)}}
         />
-        <button onClick={this.handleButtonClick}>submit</button>
+        <button onClick={(ev) => {this.handleButtonClick(this.props.addItem)}}>submit</button>
 
         <List
-          handleChange={this.checkboxChange}
-          handleRemoveItem={this.handleRemoveItem}
-          items={this.state.list}
+          handleChange={this.props.checkboxChange}
+          handleRemoveItem={this.props.removeItem}
+          items={this.props.list}
         />
       </div>
     )
   }
 }
 
-export default Todo
+// export default Todo
+
+const mapStateToProps = (state /*, ownProps*/) => {
+  return {
+    list: state.list
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    addItem: (item) => {
+      let action = getAddItemAction(item)
+      dispatch(action)
+    },
+    removeItem: (index) => {
+      let action = getRemoveItemAction(index)
+      store.dispatch(action)
+    },
+    checkboxChange: (index, event) => {
+      let value = event.currentTarget.checked
+      let action = getCheckboxChangeAction(index, value)
+      store.dispatch(action)
+    }
+  }
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Todo)
