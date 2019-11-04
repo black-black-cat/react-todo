@@ -9,11 +9,16 @@ import {
 import { connect } from 'react-redux'
 
 class Todo extends Component {
-  constructor(props) {
+  constructor (props) {
     super(props)
-    this.textInput = React.createRef();
-    this.state = store.getState()
-    store.subscribe(this.handleStoreChange)
+    this.textInput = React.createRef()
+    // this.state = store.getState()
+    // store.subscribe(this.handleStoreChange)
+  }
+
+  componentDidUpdate (prevProps, prevState, snapshot) {
+    this.props.list.length > prevProps.list.length
+      && (this.textInput.current.value = '')
   }
 
   handleButtonClick = (fn) => {
@@ -39,7 +44,6 @@ class Todo extends Component {
     }
     // this.props.addItem(item)
     dispatchFn && dispatchFn(item)
-    this.textInput.current.value = ''
   }
   handleStoreChange = () => {
     let newState = store.getState()
@@ -70,7 +74,7 @@ class Todo extends Component {
 
 const mapStateToProps = (state /*, ownProps*/) => {
   return {
-    list: state.list
+    list: state.todoApp.list
   }
 }
 
